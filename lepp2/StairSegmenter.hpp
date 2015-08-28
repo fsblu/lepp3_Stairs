@@ -59,7 +59,7 @@ private:
 	 * surface from the floor at the clustering step.
 	 * */
 
-	void handleRecongnizedSurface(PointCloudPtr const& cloud_planar_surface,
+	bool classify(PointCloudPtr const& cloud_planar_surface,
 			const pcl::ModelCoefficients & coeffs);
 
 	/*Returns the angle between two plane normals.
@@ -73,19 +73,18 @@ private:
 	 *plane and its coefficients are saved under a new plane group.
 	 * */
 
-	bool addCoefficient(const int surface_number,
-			const PointCloudPtr cloud_planar_surface,
-			const pcl::ModelCoefficients coeffs);
+	bool addCoefficient(
+			const PointCloudPtr &cloud_planar_surface,
+			const pcl::ModelCoefficients &coeffs);
 
-    /*This function is called to add the segmented plane to a corresponding
-     *surface group. Surface planes normals devising 3 degrees are considered same
-     *type of surface and saved together.
-     * */
-	bool addPlane(int const index,
-			const PointCloudPtr cloud_planar_surface);
+	/*This function is called to add the segmented plane to a corresponding
+	 *surface group. Surface planes normals devising 3 degrees are considered same
+	 *type of surface and saved together.
+	 * */
+	bool addPlane(int const index, const PointCloudPtr & cloud_planar_surface);
 	/**
-		 * Instance used to extract the planes from the input cloud.
-		 */
+	 * Instance used to extract the planes from the input cloud.
+	 */
 	pcl::SACSegmentation<PointT> segmentation_;
 	/**
 	 * Instance used to extract the actual clusters from the input cloud.
@@ -114,6 +113,8 @@ private:
 	 */
 	std::vector<CloudConstPtr> vec_cloud_stairs_;
 
+	/* The vector containing surface groups, created according to difference in inclination during the segmentation
+	 * */
 	std::vector<PointCloudPtr> vec_surface;
 
 	/* List of plane coefficients [normal_x normal_y normal_z hessian_component_d]
@@ -161,6 +162,7 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 
 	vec_cloud_stairs_.clear();
 	m_coefficients.clear();
+	vec_surface.clear();
 
 	// Instance that will be used to perform the elimination of unwanted points
 	// from the point cloud.
@@ -169,13 +171,13 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 	pcl::PointIndices::Ptr current_plane_indices(new pcl::PointIndices);
 	// Another instance of when the pcl API requires a parameter that we have no
 	// further use for.
-	pcl::ModelCoefficients coefficients;
 	// Remove planes until we reach x % of the original number of points
 	size_t const original_cloud_size = cloud_filtered->size();
 	size_t const point_threshold = min_filter_percentage_ * original_cloud_size;
 	cloud_stairs_->clear();
 	while (cloud_filtered->size() > point_threshold) {
 		// Try to obtain the next plane...
+		pcl::ModelCoefficients coefficients;
 		segmentation_.setInputCloud(cloud_filtered);
 		segmentation_.segment(*current_plane_indices, coefficients);
 
@@ -202,9 +204,12 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 		*cloud_stairs_ += *cloud_planar_surface;
 
 		//Classify the Cloud
-
+		classify(cloud_planar_surface, coefficients);
 		//vec_cloud_stairs_.push_back(cloud_planar_surface);
 	}
+
+	std::cout<<"The number of surface groups: "<<vec_surface.size()<<std::endl;
+	std::cout<<"The number of coeffs: "<<m_coefficients.size()<<std::endl;
 
 	std::cout << "#found Stairs: " << vec_cloud_stairs_.size() << std::endl;
 }
@@ -234,31 +239,30 @@ template<class PointT> double StairSegmenter<PointT>::getAngle(
 
 	return angle;
 }
+
 template<class PointT>
-void StairSegmenter<PointT>::handleRecongnizedSurface(
-		PointCloudPtr const& cloud_planar_surface,
+bool StairSegmenter<PointT>::classify(PointCloudPtr const& cloud_planar_surface,
 		const pcl::ModelCoefficients & coeffs) {
 
 	bool coeff_exists = false;
 
-	int surface_num = m_coefficients.size();
+	int size = m_coefficients.size();
 
-	for (int i = 0; i < surface_num; i++) {
-		cout << "Angle: " << getAngle(coeffs, i) << std::endl;
+	for (int i = 0; i < size; i++) {
+		double angle=getAngle(coeffs, i);
+		cout << "Angle: " << angle << std::endl;
 
-		if (getAngle(coeffs, i) < 3) {
+		if (angle < 3|| angle>177) {
 
 			cout << "Expected addition to surface: " << i << std::endl;
-			cout << "Size of the plane: " << cloud_planar_surface->points.size()
-					<< std::endl;
+
 			coeff_exists = addPlane(i, cloud_planar_surface);
 			break;
 		}
 	}
 
 	if (coeff_exists == false) {
-
-		coeff_exists = addCoefficient(surface_num, cloud_planar_surface,
+		coeff_exists = addCoefficient(cloud_planar_surface,
 				coeffs);
 	}
 
@@ -266,98 +270,48 @@ void StairSegmenter<PointT>::handleRecongnizedSurface(
 		return false;
 	return true;
 }
-template<Class PointT>
-bool StairSegmenter<PointT>::addCoefficient(const int surface_number,
-		const PointCloudPtr cloud_planar_surface,
-		const pcl::ModelCoefficients coeffs) {
+template<class PointT>
+bool StairSegmenter<PointT>::addCoefficient(
+		const PointCloudPtr & cloud_planar_surface,
+		const pcl::ModelCoefficients & coeffs) {
 
-	int size = cloud_planar_surface->points.size();
-	//cout << "Size: " << size << std::endl;
-	bool isPlaneAdded = false;
-	switch (surface_number) {
-	case 0:
+	vec_surface.push_back(cloud_planar_surface);
+	m_coefficients.push_back(coeffs);
 
-		*surface_0 += (*cloud_planar_surface);
-		//cout << "Right before" << std::endl;
-		addClusterParameters(true, 0, size);
-		//cout << "The first surface is added" << std::endl;
-		isPlaneAdded = true;
-		break;
-	case 1:
+	//bool isPlaneAdded = addClusterParameters(true, 0, size);
 
-		*surface_1 += (*cloud_planar_surface);
-		//cout << "Surface_1++" << std::endl;
-		addClusterParameters(true, 1, size);
-		isPlaneAdded = true;
-		break;
-	case 2:
+	//if (true) {
 
-		*surface_2 += (*cloud_planar_surface);
-		addClusterParameters(true, 2, size);
-		//cout << "Surface_2++" << std::endl;
-		isPlaneAdded = true;
-		break;
-	case 3:
-
-		*surface_3 += (*cloud_planar_surface);
-		addClusterParameters(true, 3, size);
-		//cout << "Surface_3++" << std::endl;
-		isPlaneAdded = true;
-		break;
-	default:
-//		cout << "ERROR Could not add new coefficients and surface" << std::endl;
-		isPlaneAdded = false;
-		break;
-	}
-
-	if (isPlaneAdded) {
-		m_coefficients->push_back(coeffs);
-//		cout << "New Coefficient Added! Surface_number : " << surface_number
-//		<< std::endl;
-		return false;
-	}
-	return false;
+	cout << "New coefficient and plane added!" << std::endl;
+    return true;//}
 
 }
-
-template <class PointT>
+//template<class PointT>
+//void Segmentation<PointT>::addClusterParameters(bool isFirstPlane,
+//		int surface, int &size) {
+//	numberOfSurface.at(surface) += 1;
+//	//cout << "beginning of add cluster parameter" << std::endl;
+//
+//	if (isFirstPlane) {
+//		max_points.at(surface) = size;
+//		min_points.at(surface) = size;
+//
+//	} else if (size > max_points[surface])
+//		max_points.at(surface) = size;
+//	else if (size < min_points[surface])
+//		min_points.at(surface) = size;
+//	//cout << "end of add cluster parameter" << std::endl;
+//
+//}
+template<class PointT>
 bool StairSegmenter<PointT>::addPlane(int const index,
-		const PointCloudPtr cloud_planar_surface) {
-	int size = cloud_planar_surface->points.size();
-	switch (index) {
+		const PointCloudPtr & cloud_planar_surface) {
 
-	case 0:
-		*surface_0 += (*cloud_planar_surface);
+	*vec_surface.at(index) += *cloud_planar_surface;
+	//addClusterParameters(false, index, size);
+	cout << "Added to surface:" << index << std::endl;
+	return true;
 
-		addClusterParameters(false, 0, size);
-		//cout << "Added to the " "Floor" "surface_0" << std::endl;
-		return true;
-	case 1:
-		*surface_1 += (*cloud_planar_surface);
-		addClusterParameters(false, 1, size);
-		//cout << "Added to surface_1" << std::endl;
-
-		return true;
-	case 2:
-		*surface_2 += (*cloud_planar_surface);
-		addClusterParameters(false, 2, size);
-		//cout << "Added to surface_2" << std::endl;
-
-		return true;
-		break;
-	case 3:
-		*surface_3 += (*cloud_planar_surface);
-		addClusterParameters(false, 3, size);
-		//cout << "Added to surface_3" << std::endl;
-
-		return true;
-	default:
-		cout << "Could not add to existing point clouds" << std::endl;
-		return true;
-	} //Switch
-
-	cout << "ERROR IN PLANE ADDITION" << std::endl;
-	return false;
 }
 template<class PointT>
 std::vector<typename pcl::PointCloud<PointT>::ConstPtr> StairSegmenter<PointT>::clustersToPointClouds(
