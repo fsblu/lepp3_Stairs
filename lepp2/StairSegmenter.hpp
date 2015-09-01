@@ -179,6 +179,7 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 	size_t const original_cloud_size = cloud_filtered->size();
 	size_t const point_threshold = min_filter_percentage_ * original_cloud_size;
 
+	vec_cloud_stairs_.push_back(cloud_filtered);
 	bool first=true;
 	while (cloud_filtered->size() > point_threshold) {
 		// Try to obtain the next plane...
@@ -212,7 +213,7 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 		}
 		*cloud_stairs_ += *cloud_planar_surface;
 
-		vec_segments.push_back(cloud_planar_surface);
+		//vec_segments.push_back(cloud_planar_surface);
 		//Classify the Cloud
 		classify(cloud_planar_surface, coefficients);
 		//vec_cloud_stairs_.push_back(cloud_planar_surface);
