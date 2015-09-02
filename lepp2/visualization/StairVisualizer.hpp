@@ -51,42 +51,17 @@ template<class PointT>
 void StairVisualizer<PointT>::drawStairs(
 		std::vector<typename pcl::PointCloud<PointT>::ConstPtr> stairs,
 		pcl::visualization::PCLVisualizer& pclViz) {
-   // pclViz.removeAllPointClouds();
 
-	// typename pcl::PointCloud<PointT>::Ptr single_cloud (new pcl::PointCloud<PointT> ());
-	// pcl::visualization::PointCloudColorHandlerCustom<PointT> red (single_cloud, 255, 0, 0);
-	// pcl::visualization::PointCloudColorHandlerCustom<PointT> green (single_cloud, 0, 255, 0);
-	// pcl::visualization::PointCloudColorHandlerCustom<PointT> blue (single_cloud, 0, 0, 255);
-	// pcl::visualization::PointCloudColorHandlerCustom<PointT> pink (single_cloud, 200, 18, 170);
-
-	// Remove all old stairs...
-	// std::cout << "call removeAllPointClouds" << std::endl;
-	// std::cout << "all pointClouds removed" << std::endl;
-
-	// ...and draw all the new ones.
-
-	// StairDrawer<PointT> drawer(pclViz);
-
-	 pclViz.removePointCloud("STAIRS1",0);
+	 pclViz.removePointCloud("STAIRS0",0);
+   	 pclViz.removePointCloud("STAIRS1",0);
 	 pclViz.removePointCloud("STAIRS2",0);
 	 pclViz.removePointCloud("STAIRS3",0);
+	 pclViz.removePointCloud("STAIRS4",0);
 
 	size_t const sz = stairs.size();
 	for (size_t i = 0; i < sz; ++i) {
-		// drawer.drawStair(stairs[i]);
-		//single_cloud->clear ();
-		// *single_cloud = *stairs[i];
-if (i == 0) {
-//			// pcl::visualization::PointCloudColorHandlerCustom<PointT> red (stairs[i], 255, 0, 0);
-//			if (!pclViz.updatePointCloud(stairs[i], "STAIRS0"))
-//				pclViz.addPointCloud(stairs[i], "STAIRS0");
-//			pclViz.setPointCloudRenderingProperties(
-//					pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 1.0,
-//					"STAIRS0");
-	cout<<"first"<<std::endl;
 
-		}
-		else if (i == 1) {
+		 if (i ==0) {
 			// pcl::visualization::PointCloudColorHandlerCustom<PointT> red (stairs[i], 255, 0, 0);
 			if (!pclViz.updatePointCloud(stairs[i], "STAIRS1"))
 				pclViz.addPointCloud(stairs[i], "STAIRS1");
@@ -94,7 +69,7 @@ if (i == 0) {
 					pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0, 0,
 					"STAIRS1");
 		}
-		else if (i == 2) {
+		else if (i == 1) {
 			// pcl::visualization::PointCloudColorHandlerCustom<PointT> green (stairs[i], 0, 255, 0);
 			if (!pclViz.updatePointCloud(stairs[i], "STAIRS2"))
 				pclViz.addPointCloud(stairs[i], "STAIRS2");
@@ -102,7 +77,7 @@ if (i == 0) {
 					pcl::visualization::PCL_VISUALIZER_COLOR, 0, 1.0, 0,
 					"STAIRS2");
 		}
-		else if (i == 3) {
+		else if (i == 2) {
 			// pcl::visualization::PointCloudColorHandlerCustom<PointT> blue (stairs[i], 0, 0, 255);
 			if (!pclViz.updatePointCloud(stairs[i], "STAIRS3"))
 				pclViz.addPointCloud(stairs[i], "STAIRS3");
@@ -110,7 +85,7 @@ if (i == 0) {
 					pcl::visualization::PCL_VISUALIZER_COLOR, 0, 0, 1.0,
 					"STAIRS3");
 		}
-		else if (i == 4) {
+		else if (i == 3) {
 			// pcl::visualization::PointCloudColorHandlerCustom<PointT> pink (stairs[i], 200, 18, 170);
 			if (!pclViz.updatePointCloud(stairs[i], "STAIRS4"))
 				pclViz.addPointCloud(stairs[i], "STAIRS4"); //PURPLE
@@ -127,10 +102,6 @@ if (i == 0) {
 //					"STAIRS5");
 //		}
 	}
-
-
-
-
 
 	std::cout << "exiting stair drawer..." << std::endl;
 	std::cout << "=======================" << std::endl;

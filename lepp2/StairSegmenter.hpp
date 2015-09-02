@@ -179,7 +179,6 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 	size_t const original_cloud_size = cloud_filtered->size();
 	size_t const point_threshold = min_filter_percentage_ * original_cloud_size;
 
-	vec_cloud_stairs_.push_back(cloud_filtered);
 	bool first=true;
 	while (cloud_filtered->size() > point_threshold) {
 		// Try to obtain the next plane...
@@ -207,7 +206,8 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 		extract.setNegative(true);
 		extract.filter(*cloud_filtered);
 
-		if (first){
+		if(first)
+		{
 			first=false;
 			continue;
 		}
@@ -295,36 +295,16 @@ bool StairSegmenter<PointT>::addCoefficient(
 	vec_surface.push_back(cloud_planar_surface);
 	m_coefficients.push_back(coeffs);
 
-	//bool isPlaneAdded = addClusterParameters(true, 0, size);
-
 	cout << "New coefficient and plane added!" << std::endl;
 
 	return true;
 }
-//template<class PointT>
-//void Segmentation<PointT>::addClusterParameters(bool isFirstPlane,
-//		int surface, int &size) {
-//	numberOfSurface.at(surface) += 1;
-//	//cout << "beginning of add cluster parameter" << std::endl;
-//
-//	if (isFirstPlane) {
-//		max_points.at(surface) = size;
-//		min_points.at(surface) = size;
-//
-//	} else if (size > max_points[surface])
-//		max_points.at(surface) = size;
-//	else if (size < min_points[surface])
-//		min_points.at(surface) = size;
-//	//cout << "end of add cluster parameter" << std::endl;
-//
-//}
 
 template<class PointT>
 bool StairSegmenter<PointT>::addPlane(int const index,
 		const PointCloudPtr & cloud_planar_surface) {
 
 	*vec_surface.at(index) += *cloud_planar_surface;
-	//addClusterParameters(false, index, size);
 	cout << "Added to surface:" << index << std::endl;
 	return true;
 
@@ -339,6 +319,7 @@ template<class PointT> std::vector<typename pcl::PointCloud<PointT>::ConstPtr> S
 	cout << "Cluster size:" << vec_cloud_stairs_.size() << std::endl;
 	return vec_cloud_stairs_;
 }
+
 template<class PointT>
 void StairSegmenter<PointT>::clustersToPointClouds(PointCloudPtr const& cloud_,
 		std::vector<pcl::PointIndices> const& cluster_indices) {
