@@ -1,5 +1,5 @@
-#ifndef LEPP2_STAIR_SEGMENTER_H__
-#define LEPP2_STAIR_SEGMENTER_H__
+#ifndef LEPP2_SURFACE_SEGMENTER_H__
+#define LEPP2_SURFACE_SEGMENTER_H__
 
 #include "lepp2/BaseSegmenter.hpp"
 
@@ -14,9 +14,9 @@ namespace lepp {
  * TODO put comments
  */
 template<class PointT>
-class StairSegmenter: public BaseSegmenter<PointT> {
+class SurfaceSegmenter: public BaseSegmenter<PointT> {
 public:
-	StairSegmenter();
+    SurfaceSegmenter();
 
 	virtual std::vector<typename pcl::PointCloud<PointT>::ConstPtr> segment(
 			const typename pcl::PointCloud<PointT>::ConstPtr& cloud);
@@ -37,13 +37,13 @@ private:
 	/**
 	 * Removes all planes from the given point cloud.
 	 */
-	void findStairs(PointCloudPtr const& cloud_filtered);
+    void findSurfaces(PointCloudPtr const& cloud_filtered);
 	/**
 	 * Extracts the Euclidean clusters from the given point cloud.
 	 * Returns a vector where each element represents the pcl::PointIndices
 	 * instance representing the corresponding cluster.
 	 */
-	std::vector<pcl::PointIndices> getStairClusters(PointCloudPtr const& cloud);
+    std::vector<pcl::PointIndices> getSurfaceClusters(PointCloudPtr const& cloud);
 	/**
 	 * Convert the clusters represented by the given indices to point clouds,
 	 * by copying the corresponding points from the cloud to the corresponding
@@ -99,9 +99,9 @@ private:
 	 */
 
 	/**
-	 * The cloud that holds all planar surfaces (Stairs).
+     * The cloud that holds all planar surfaces (surfaces).
 	 */
-	PointCloudPtr cloud_stairs_;
+    PointCloudPtr cloud_surfaces_;
 	/**
 	 * The percentage of the original cloud that should be kept for the
 	 * clusterization, at the least.
@@ -111,9 +111,9 @@ private:
 	 */
 
 	/**
-	 * TEMP: vector containing clouds for each stair
+     * TEMP: vector containing clouds for each surface
 	 */
-	std::vector<CloudConstPtr> vec_cloud_stairs_;
+    std::vector<CloudConstPtr> vec_cloud_surfaces_;
 
 	/* The vector containing surface groups, created according to difference in inclination during the segmentation
 	 * */
@@ -133,8 +133,8 @@ private:
 };
 
 template<class PointT>
-StairSegmenter<PointT>::StairSegmenter() :
-		min_filter_percentage_(0.1), cloud_stairs_(new PointCloudT()) {
+SurfaceSegmenter<PointT>::SurfaceSegmenter() :
+        min_filter_percentage_(0.1), cloud_surfaces_(new PointCloudT()) {
 	// Parameter initialization of the plane segmentation
 	segmentation_.setOptimizeCoefficients(true);
 	segmentation_.setModelType(pcl::SACMODEL_PLANE);
@@ -147,7 +147,7 @@ StairSegmenter<PointT>::StairSegmenter() :
 }
 
 template<class PointT>
-typename pcl::PointCloud<PointT>::Ptr StairSegmenter<PointT>::preprocessCloud(
+typename pcl::PointCloud<PointT>::Ptr SurfaceSegmenter<PointT>::preprocessCloud(
 		CloudConstPtr const& cloud) {
 	// Remove NaN points from the input cloud.
 	// The pcl API forces us to pass in a reference to the vector, even if we have
@@ -160,12 +160,12 @@ typename pcl::PointCloud<PointT>::Ptr StairSegmenter<PointT>::preprocessCloud(
 }
 
 template<class PointT>
-void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
+void SurfaceSegmenter<PointT>::findSurfaces(PointCloudPtr const& cloud_filtered) {
 
-	vec_cloud_stairs_.clear();
+    vec_cloud_surfaces_.clear();
 	m_coefficients.clear();
 	vec_surface.clear();
-	cloud_stairs_->clear();
+    cloud_surfaces_->clear();
 	vec_segments.clear();
 
 	// Instance that will be used to perform the elimination of unwanted points
@@ -196,7 +196,7 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 		// Cloud that holds a plane in each iteration, to be added to the total cloud.
 		PointCloudPtr cloud_planar_surface(new PointCloudT());
 
-		// Add the planar inliers to the cloud holding the stairs
+        // Add the planar inliers to the cloud holding the surfaces
 		extract.setInputCloud(cloud_filtered);
 		extract.setIndices(current_plane_indices);
 		extract.setNegative(false);
@@ -211,12 +211,12 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 			first=false;
 			continue;
 		}
-		*cloud_stairs_ += *cloud_planar_surface;
+        *cloud_surfaces_ += *cloud_planar_surface;
 
 		//vec_segments.push_back(cloud_planar_surface);
 		//Classify the Cloud
 		classify(cloud_planar_surface, coefficients);
-		//vec_cloud_stairs_.push_back(cloud_planar_surface);
+        //vec_cloud_surfaces_.push_back(cloud_planar_surface);
 	}
 
 	std::cout << "The number of surface groups: " << vec_segments.size()
@@ -225,7 +225,7 @@ void StairSegmenter<PointT>::findStairs(PointCloudPtr const& cloud_filtered) {
 }
 
 template<class PointT>
-std::vector<pcl::PointIndices> StairSegmenter<PointT>::getStairClusters(
+std::vector<pcl::PointIndices> SurfaceSegmenter<PointT>::getSurfaceClusters(
 		PointCloudPtr const& cloud) {
 	// Extract the clusters from such a filtered cloud.
 //
@@ -246,7 +246,7 @@ std::vector<pcl::PointIndices> StairSegmenter<PointT>::getStairClusters(
 	return cluster_indices;
 }
 
-template<class PointT> double StairSegmenter<PointT>::getAngle(
+template<class PointT> double SurfaceSegmenter<PointT>::getAngle(
 		const pcl::ModelCoefficients &coeffs, const int &index) {
 
 	//Scalar Product
@@ -261,7 +261,7 @@ template<class PointT> double StairSegmenter<PointT>::getAngle(
 }
 
 template<class PointT>
-void StairSegmenter<PointT>::classify(PointCloudPtr const& cloud_planar_surface,
+void SurfaceSegmenter<PointT>::classify(PointCloudPtr const& cloud_planar_surface,
 		const pcl::ModelCoefficients & coeffs) {
 
 	bool coeff_exists = false;
@@ -288,7 +288,7 @@ void StairSegmenter<PointT>::classify(PointCloudPtr const& cloud_planar_surface,
 		cout << "ERROR at classification" << std::endl;
 }
 template<class PointT>
-bool StairSegmenter<PointT>::addCoefficient(
+bool SurfaceSegmenter<PointT>::addCoefficient(
 		const PointCloudPtr & cloud_planar_surface,
 		const pcl::ModelCoefficients & coeffs) {
 
@@ -301,7 +301,7 @@ bool StairSegmenter<PointT>::addCoefficient(
 }
 
 template<class PointT>
-bool StairSegmenter<PointT>::addPlane(int const index,
+bool SurfaceSegmenter<PointT>::addPlane(int const index,
 		const PointCloudPtr & cloud_planar_surface) {
 
 	*vec_surface.at(index) += *cloud_planar_surface;
@@ -309,19 +309,19 @@ bool StairSegmenter<PointT>::addPlane(int const index,
 	return true;
 
 }
-template<class PointT> std::vector<typename pcl::PointCloud<PointT>::ConstPtr> StairSegmenter<
+template<class PointT> std::vector<typename pcl::PointCloud<PointT>::ConstPtr> SurfaceSegmenter<
 		PointT>::cluster(void) {
 	for (int i = 0; i < vec_surface.size(); i++) {
-		std::vector<pcl::PointIndices> cluster_indices = getStairClusters(
+        std::vector<pcl::PointIndices> cluster_indices = getSurfaceClusters(
 				vec_surface.at(i));
 		clustersToPointClouds(vec_surface.at(i), cluster_indices);
 	}
-	cout << "Cluster size:" << vec_cloud_stairs_.size() << std::endl;
-	return vec_cloud_stairs_;
+    cout << "Cluster size:" << vec_cloud_surfaces_.size() << std::endl;
+    return vec_cloud_surfaces_;
 }
 
 template<class PointT>
-void StairSegmenter<PointT>::clustersToPointClouds(PointCloudPtr const& cloud_,
+void SurfaceSegmenter<PointT>::clustersToPointClouds(PointCloudPtr const& cloud_,
 		std::vector<pcl::PointIndices> const& cluster_indices) {
 	// Now copy the points belonging to each cluster to a separate PointCloud
 	// and finally return a vector of these point clouds.
@@ -337,18 +337,18 @@ void StairSegmenter<PointT>::clustersToPointClouds(PointCloudPtr const& cloud_,
 			current->push_back(cloud_->at(curr_indices[j]));
 		}
 
-		vec_cloud_stairs_.push_back(current);
+        vec_cloud_surfaces_.push_back(current);
 	}
 
-	std::cout << "Stairs number:" << vec_cloud_stairs_.size() << std::endl;
+    std::cout << "surfaces number:" << vec_cloud_surfaces_.size() << std::endl;
 }
 
 template<class PointT>
-std::vector<typename pcl::PointCloud<PointT>::ConstPtr> StairSegmenter<PointT>::segment(
+std::vector<typename pcl::PointCloud<PointT>::ConstPtr> SurfaceSegmenter<PointT>::segment(
 		const typename pcl::PointCloud<PointT>::ConstPtr& cloud) {
 	PointCloudPtr cloud_filtered = preprocessCloud(cloud);
-	// extract those planes that are considered as stairs and put them in cloud_stairs_
-	findStairs(cloud_filtered);
+    // extract those planes that are considered as surfaces and put them in cloud_surfaces_
+    findSurfaces(cloud_filtered);
 	return cluster();
 	//return vec_segments;
 }

@@ -8,7 +8,7 @@
 #include <pcl/io/pcd_grabber.h>
 
 #include "lepp2/BaseObstacleDetector.hpp"
-#include "lepp2/StairDetector.hpp"
+#include "lepp2/SurfaceDetector.hpp"
 #include "lepp2/GrabberVideoSource.hpp"
 #include "lepp2/BaseVideoSource.hpp"
 #include "lepp2/VideoObserver.hpp"
@@ -17,7 +17,7 @@
 
 #include "lepp2/visualization/EchoObserver.hpp"
 #include "lepp2/visualization/ObstacleVisualizer.hpp"
-#include "lepp2/visualization/StairVisualizer.hpp"
+#include "lepp2/visualization/SurfaceVisualizer.hpp"
 
 #include "lepp2/filter/TruncateFilter.hpp"
 #include "lepp2/filter/SensorCalibrationFilter.hpp"
@@ -114,17 +114,17 @@ int main(int argc, char* argv[]) {
   boost::shared_ptr<FilteredVideoSource<PointT> > source(
       buildFilteredSource(raw_source));
   // Prepare the detector
-  boost::shared_ptr<StairDetector<PointT> > stairDetector(
-      new StairDetector<PointT>());
-  source->attachObserver(stairDetector);
+  boost::shared_ptr<SurfaceDetector<PointT> > surfaceDetector(
+      new SurfaceDetector<PointT>());
+  source->attachObserver(surfaceDetector);
 
   // Prepare the result visualizer...
-  boost::shared_ptr<StairVisualizer<PointT> > visualizer(
-        new StairVisualizer<PointT>());
+  boost::shared_ptr<SurfaceVisualizer<PointT> > visualizer(
+        new SurfaceVisualizer<PointT>());
   // Attaching the visualizer to the source: allow it to display the original
   // point cloud.
   source->attachObserver(visualizer);
-  stairDetector->attachStairAggregator(visualizer);
+  surfaceDetector->attachSurfaceAggregator(visualizer);
 
   // Starts capturing new frames and forwarding them to attached observers.
   source->open();
