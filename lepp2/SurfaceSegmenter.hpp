@@ -317,6 +317,9 @@ template<class PointT> std::vector<typename pcl::PointCloud<PointT>::ConstPtr> S
 		clustersToPointClouds(vec_surface.at(i), cluster_indices);
 	}
     cout << "Cluster size:" << vec_cloud_surfaces_.size() << std::endl;
+
+
+
     return vec_cloud_surfaces_;
 }
 
